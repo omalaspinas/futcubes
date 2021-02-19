@@ -1,5 +1,7 @@
 -- Inspired by the library of Paul Bourke
 
+local let tol = 1e-5f64
+
 local let edge_table: [256]i64 = [
         0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
         0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
@@ -350,17 +352,15 @@ let lookup (i: i64) : (i64, i64) =
     else (-1, -1) -- use assert maybe
 
 let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f64): point =
-    let tol = 0.00001f64
-    in
-        if f64.abs(isolevel - valp1) < tol then p1
-        else if f64.abs(isolevel - valp2) < tol then p2
-        else if f64.abs(valp1 - valp2) < tol then p1
-        else
-            let mu = (isolevel - valp1) / (valp2 - valp1)
-            let px = p1.x + mu * (p2.x - p1.x)
-            let py = p1.y + mu * (p2.y - p1.y)
-            let pz = p1.z + mu * (p2.z - p1.z)
-            in {x = px, y = py, z = pz}
+    if f64.abs(isolevel - valp1) < tol then p1
+    else if f64.abs(isolevel - valp2) < tol then p2
+    else if f64.abs(valp1 - valp2) < tol then p1
+    else
+        let mu = (isolevel - valp1) / (valp2 - valp1)
+        let px = p1.x + mu * (p2.x - p1.x)
+        let py = p1.y + mu * (p2.y - p1.y)
+        let pz = p1.z + mu * (p2.z - p1.z)
+        in {x = px, y = py, z = pz}
 
 
 let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
@@ -403,7 +403,7 @@ let triangle_to_array (t: triangle) =
     ]
 
 
-entry polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) = 
+let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []triangle = 
     let triangles = flatten_4d (
             tabulate_3d (nx-1) (ny-1) (nz-1) (\(x) (y) (z) ->
                 let ooo: point = (new_point (f64.i64 (x))     (f64.i64 (y))     (f64.i64 (z)))
@@ -430,18 +430,22 @@ entry polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) =
                         rho[i64.f64 (oii.x), i64.f64 (oii.y), i64.f64 (oii.z)]
                     ]
                 let grid: grid_cell = {p = p', value = value'}
-                in (polygonise grid 0.5) :> [5]triangle
+                in (polygonise grid isovalue) :> [5]triangle
             )
         ) :> []triangle
-    let legal_triangles = filter (\t -> 
-        area (t) > 0.001
-    ) triangles
-    in map(\t -> triangle_to_array t) legal_triangles
+    in filter (\t -> 
+        area (t) > tol
+    ) triangles -- only keep legal triangles
+
+-- Returns an array of 9 f64 number which are the three
+-- vertices of each triangle.
+entry main_polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): [][9]f64 = 
+    map(\t -> triangle_to_array t) (polygonise_field rho isovalue)
 
 
-
-
-let main : []triangle = 
+-- Toy example which should create an horizontal plane
+-- at height 0.5
+let dummy_example : []triangle = 
     let ooo: point = (new_point 0f64 0f64 0f64)
     let ioo: point = (new_point 1f64 0f64 0f64)
     let iio: point = (new_point 1f64 1f64 0f64)
@@ -455,7 +459,10 @@ let main : []triangle =
     let p': [8]point = [ooo, ioo, iio, oio, ooi, ioi, iii, oii]
 
     let grid: grid_cell = {p = p', value = value'}
-    in polygonise grid 0.5
+    in filter (\t -> area (t) > tol) (polygonise grid 0.5)
+
+entry main : [][9]f64 =
+    map (triangle_to_array) (dummy_example)
     
 
 
