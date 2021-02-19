@@ -16,7 +16,7 @@ let dummy_example : []mcubes.triangle =
     let p': [8]mcubes.point = [ooo, ioo, iio, oio, ooi, ioi, iii, oii]
 
     let grid: mcubes.grid_cell = {p = p', value = value'}
-    in filter (\t -> mcubes.area (t) > mcubes.tol) (mcubes.polygonise grid 0.5)
+    in mcubes.polygonise grid 0.5
 
 -- ==
 -- entry: main
