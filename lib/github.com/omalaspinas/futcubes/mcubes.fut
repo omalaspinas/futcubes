@@ -1,8 +1,10 @@
 -- Inspired by the library of Paul Bourke
 
-local let tol = 1e-5f64
+module mcubes = {
 
-local let edge_table: [256]i64 = [
+let tol = 1e-5f64
+
+let edge_table: [256]i64 = [
         0x0, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
         0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
         0x190, 0x99, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c,
@@ -36,7 +38,7 @@ local let edge_table: [256]i64 = [
         0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c,
         0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x0]
 
-local let tri_table : [256][16]i64 =
+let tri_table : [256][16]i64 =
         [ [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
          [ 0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
          [ 0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
@@ -294,48 +296,48 @@ local let tri_table : [256][16]i64 =
          [ 0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
          [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ] ]
 
-local type point = { x:f64, y:f64, z:f64 }
+type point = { x:f64, y:f64, z:f64 }
 
-local let new_point (x': f64) (y': f64) (z': f64): point = {x = x', y = y', z = z'}
+let new_point (x': f64) (y': f64) (z': f64): point = {x = x', y = y', z = z'}
 
-local let zero: point = { x = 0.0f64, y = 0.0f64, z = 0.0f64 }
+let zero: point = { x = 0.0f64, y = 0.0f64, z = 0.0f64 }
 
-local let sub (lhs: point) (rhs: point) : point = {
+let sub (lhs: point) (rhs: point) : point = {
     x = lhs.x - rhs.x, 
     y = lhs.y - rhs.y, 
     z = lhs.z - rhs.z 
 }
 
-local let cross (lhs: point) (rhs: point) : point = {
+let cross (lhs: point) (rhs: point) : point = {
     x = lhs.y * rhs.z - lhs.z * rhs.y,
     y = - lhs.x * rhs.z + lhs.z * rhs.x,
     z = lhs.x * rhs.y - lhs.y * rhs.x
 }
 
-local let norm_sqr (p: point) : f64 = 
+let norm_sqr (p: point) : f64 = 
     p.x * p.x + p.y * p.y + p.z * p.z
 
-local let norm (p: point) : f64 =
+let norm (p: point) : f64 =
     f64.sqrt (norm_sqr p)
 
-local type triangle = {p0: point, p1: point, p2: point}
+type triangle = {p0: point, p1: point, p2: point}
 
-local let empty_triangle : triangle = {
+let empty_triangle : triangle = {
     p0 = zero,
     p1 = zero,
     p2 = zero
 }
 
-local let area (t: triangle) : f64 = 
+let area (t: triangle) : f64 = 
     let p01 = sub (t.p1) (t.p0)
     let p02 = sub (t.p2) (t.p0)
 
     in 0.5 * norm (cross p01 p02)
 
-local type grid_cell = { p: [8]point, value: [8]f64 }
+type grid_cell = { p: [8]point, value: [8]f64 }
  
 
-local let lookup (i: i64) : (i64, i64) = 
+let lookup (i: i64) : (i64, i64) = 
     -- Find the vertices where the surface intersects the cube 
     if i == 1 then (0, 1)
     else if i == 2 then (1, 2)
@@ -351,7 +353,7 @@ local let lookup (i: i64) : (i64, i64) =
     else if i == 2048 then (3, 7)
     else (-1, -1) -- use assert maybe
 
-local let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f64): point =
+let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f64): point =
     if f64.abs(isolevel - valp1) < tol then p1
     else if f64.abs(isolevel - valp2) < tol then p2
     else if f64.abs(valp1 - valp2) < tol then p1
@@ -363,7 +365,7 @@ local let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (va
         in {x = px, y = py, z = pz}
 
 
-local let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
+let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
     let cube_index = 0
     let cube_index = if grid.value[0] < isolevel then cube_index | 1 else cube_index
     let cube_index = if grid.value[1] < isolevel then cube_index | 2 else cube_index
@@ -395,7 +397,7 @@ local let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
             in triangles -- filter out zero size triangles.
             -- in filter (\t -> area (t) > 0.001) triangles -- filter out zero size triangles.
 
-local let triangle_to_array (t: triangle) = 
+let triangle_to_array (t: triangle) = 
     [
         t.p0.x, t.p0.y, t.p0.z,
         t.p1.x, t.p1.y, t.p1.z,
@@ -403,7 +405,7 @@ local let triangle_to_array (t: triangle) =
     ]
 
 
-local let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []triangle = 
+let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []triangle = 
     let triangles = flatten_4d (
             tabulate_3d (nx-1) (ny-1) (nz-1) (\(x) (y) (z) ->
                 let ooo: point = (new_point (f64.i64 (x))     (f64.i64 (y))     (f64.i64 (z)))
@@ -436,153 +438,5 @@ local let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): 
     in filter (\t -> 
         area (t) > tol
     ) triangles -- only keep legal triangles
-
--- Returns an array of 9 f64 number which are the three
--- vertices of each triangle.
-entry main_polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): [][9]f64 = 
-    map(\t -> triangle_to_array t) (polygonise_field rho isovalue)
-
-
--- Toy example which should create an horizontal plane
--- at height 0.5
-local let dummy_example : []triangle = 
-    let ooo: point = (new_point 0f64 0f64 0f64)
-    let ioo: point = (new_point 1f64 0f64 0f64)
-    let iio: point = (new_point 1f64 1f64 0f64)
-    let oio: point = (new_point 0f64 1f64 0f64)
-    let ooi: point = (new_point 0f64 0f64 1f64)
-    let ioi: point = (new_point 1f64 0f64 1f64)
-    let iii: point = (new_point 1f64 1f64 1f64)
-    let oii: point = (new_point 0f64 1f64 1f64)
-
-    let value': [8]f64 = [0f64, 0, 0, 0, 1, 1, 1, 1]
-    let p': [8]point = [ooo, ioo, iio, oio, ooi, ioi, iii, oii]
-
-    let grid: grid_cell = {p = p', value = value'}
-    in filter (\t -> area (t) > tol) (polygonise grid 0.5)
-
-entry main : [][9]f64 =
-    map (triangle_to_array) (dummy_example)
     
-
-
--- // point VertexInterp(double isolevel, point p1, point p2, double valp1, double valp2)
--- // // (mp4Vector p1, mp4Vector p2, float value)
--- // {
--- //     if (smaller_than(p2, p1))
--- //     {
--- //         point temp;
--- //         double temp_val;
-
--- //         temp = p1;
--- //         p1 = p2;
--- //         p2 = temp;
-
--- //         temp_val = valp1;
--- //         valp1 = valp2;
--- //         valp2 = temp_val;
--- //     }
-
--- //     point p;
--- //     if(fabs(valp1 - valp2) > 0.00001) {
--- //         // p = (mpVector)p1 + ((mpVector)p2 - (mpVector)p1)/(p2.val - p1.val)*(isovalue - p1.val);
--- //         p.x = p1.x + (p2.x - p1.x) / (valp2 - valp1) * (isolevel - valp1);
--- //         p.y = p1.y + (p2.y - p1.y) / (valp2 - valp1) * (isolevel - valp1);
--- //         p.z = p1.z + (p2.z - p1.z) / (valp2 - valp1) * (isolevel - valp1);
--- //     }
--- //     else {
--- //         p = (point)p1;
--- //     }
-    
--- //     return p;
--- // }
-
-
--- double sqr(double x) {
---     return x * x;
--- }
-
--- int main() {
---     int nx = 100, ny = 101, nz = 102;
---     int x = nx / 2;
---     int y = ny / 2;
---     int z = nz / 2;
-
---     // double rho[nx][ny][nz];
---     double ***rho = malloc(ny * sizeof(*rho));
---     for (int ix = 0; ix < nx; ++ix) {
---         rho[ix] = malloc(ny * sizeof(*rho[ix]));
---         for (int iy = 0; iy < ny; ++iy) {
---             rho[ix][iy] = malloc(nz * sizeof(*rho[ix][iy]));
---         }
---     }
-
---     for (int ix = 0; ix < nx; ++ix) {
---         for (int iy = 0; iy < ny; ++iy) {
---             for (int iz = 0; iz < nz; ++iz) {
---                 double r = 0;
---                 if (sqr(ix - x) + sqr(iy - y) + sqr(iz - z) < 100) {
---                     r = 1.0;
---                 }
---                 rho[ix][iy][iz] = r;
---             }
---         }
---     }
-
---     double isolevel = 0.5;
---     triangle *t = malloc(nx*ny*nz*5*sizeof(*t));
---     int ind_t = 0;
-
---     for (int ix = 0; ix < nx-1; ++ix) {
---         for (int iy = 0; iy < ny-1; ++iy) {
---             for (int iz = 0; iz < nz-1; ++iz) {
---                 GRIDCELL g;
---                 g.p[0] = point_create(ix,   iy,   iz);
---                 g.val[0] = rho[ix][iy][iz];
-
---                 g.p[1] = point_create(ix+1, iy,   iz);
---                 g.val[1] = rho[ix+1][iy][iz];
-
---                 g.p[2] = point_create(ix+1, iy+1, iz);
---                 g.val[2] = rho[ix+1][iy+1][iz];
-                
---                 g.p[3] = point_create(ix,   iy+1, iz);
---                 g.val[3] = rho[ix][iy+1][iz];
-                
---                 g.p[4] = point_create(ix,   iy,   iz+1);
---                 g.val[4] = rho[ix][iy][iz+1];
-                
---                 g.p[5] = point_create(ix+1, iy,   iz+1);
---                 g.val[5] = rho[ix+1][iy][iz+1];
-                
---                 g.p[6] = point_create(ix+1, iy+1, iz+1);
---                 g.val[6] = rho[ix+1][iy+1][iz+1];
-                
---                 g.p[7] = point_create(ix,   iy+1, iz+1);
---                 g.val[7] = rho[ix][iy+1][iz+1];
-
---                 triangle t_tmp[10];
---                 int num = Polygonise(g, isolevel, t_tmp);
---                 for (int it = 0; it < num; ++it) {
---                     t[ind_t] = t_tmp[it];
---                     ind_t += 1;
---                 }
---                 if (num > 0) {
---                     printf("num triangles = %d\n", num);
---                 }
---             }
---         }
---     }
-
---     triangle_write_stl(t, ind_t, "./", "tri");
-
---     free(t);
---     for (int ix = 0; ix < nx; ++ix) {
---         for (int iy = 0; iy < ny; ++iy) {
---             free(rho[ix][iy]);
---         }
---         free(rho[ix]);
---     }
---     free(rho);
-    
--- }
+} -- module mcubes
