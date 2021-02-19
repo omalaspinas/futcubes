@@ -294,48 +294,48 @@ local let tri_table : [256][16]i64 =
          [ 0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ],
          [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 ] ]
 
-type point = { x:f64, y:f64, z:f64 }
+local type point = { x:f64, y:f64, z:f64 }
 
-let new_point (x': f64) (y': f64) (z': f64): point = {x = x', y = y', z = z'}
+local let new_point (x': f64) (y': f64) (z': f64): point = {x = x', y = y', z = z'}
 
-let zero: point = { x = 0.0f64, y = 0.0f64, z = 0.0f64 }
+local let zero: point = { x = 0.0f64, y = 0.0f64, z = 0.0f64 }
 
-let sub (lhs: point) (rhs: point) : point = {
+local let sub (lhs: point) (rhs: point) : point = {
     x = lhs.x - rhs.x, 
     y = lhs.y - rhs.y, 
     z = lhs.z - rhs.z 
 }
 
-let cross (lhs: point) (rhs: point) : point = {
+local let cross (lhs: point) (rhs: point) : point = {
     x = lhs.y * rhs.z - lhs.z * rhs.y,
     y = - lhs.x * rhs.z + lhs.z * rhs.x,
     z = lhs.x * rhs.y - lhs.y * rhs.x
 }
 
-let norm_sqr (p: point) : f64 = 
+local let norm_sqr (p: point) : f64 = 
     p.x * p.x + p.y * p.y + p.z * p.z
 
-let norm (p: point) : f64 =
+local let norm (p: point) : f64 =
     f64.sqrt (norm_sqr p)
 
-type triangle = {p0: point, p1: point, p2: point}
+local type triangle = {p0: point, p1: point, p2: point}
 
-let empty_triangle : triangle = {
+local let empty_triangle : triangle = {
     p0 = zero,
     p1 = zero,
     p2 = zero
 }
 
-let area (t: triangle) : f64 = 
+local let area (t: triangle) : f64 = 
     let p01 = sub (t.p1) (t.p0)
     let p02 = sub (t.p2) (t.p0)
 
     in 0.5 * norm (cross p01 p02)
 
-type grid_cell = { p: [8]point, value: [8]f64 }
+local type grid_cell = { p: [8]point, value: [8]f64 }
  
 
-let lookup (i: i64) : (i64, i64) = 
+local let lookup (i: i64) : (i64, i64) = 
     -- Find the vertices where the surface intersects the cube 
     if i == 1 then (0, 1)
     else if i == 2 then (1, 2)
@@ -351,7 +351,7 @@ let lookup (i: i64) : (i64, i64) =
     else if i == 2048 then (3, 7)
     else (-1, -1) -- use assert maybe
 
-let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f64): point =
+local let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f64): point =
     if f64.abs(isolevel - valp1) < tol then p1
     else if f64.abs(isolevel - valp2) < tol then p2
     else if f64.abs(valp1 - valp2) < tol then p1
@@ -363,7 +363,7 @@ let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f
         in {x = px, y = py, z = pz}
 
 
-let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
+local let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
     let cube_index = 0
     let cube_index = if grid.value[0] < isolevel then cube_index | 1 else cube_index
     let cube_index = if grid.value[1] < isolevel then cube_index | 2 else cube_index
@@ -395,7 +395,7 @@ let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
             in triangles -- filter out zero size triangles.
             -- in filter (\t -> area (t) > 0.001) triangles -- filter out zero size triangles.
 
-let triangle_to_array (t: triangle) = 
+local let triangle_to_array (t: triangle) = 
     [
         t.p0.x, t.p0.y, t.p0.z,
         t.p1.x, t.p1.y, t.p1.z,
@@ -403,7 +403,7 @@ let triangle_to_array (t: triangle) =
     ]
 
 
-let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []triangle = 
+local let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []triangle = 
     let triangles = flatten_4d (
             tabulate_3d (nx-1) (ny-1) (nz-1) (\(x) (y) (z) ->
                 let ooo: point = (new_point (f64.i64 (x))     (f64.i64 (y))     (f64.i64 (z)))
@@ -445,7 +445,7 @@ entry main_polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64):
 
 -- Toy example which should create an horizontal plane
 -- at height 0.5
-let dummy_example : []triangle = 
+local let dummy_example : []triangle = 
     let ooo: point = (new_point 0f64 0f64 0f64)
     let ioo: point = (new_point 1f64 0f64 0f64)
     let iio: point = (new_point 1f64 1f64 0f64)
