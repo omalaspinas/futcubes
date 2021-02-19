@@ -394,7 +394,8 @@ let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
                 else {p0 = vert_list[tri_table[cube_index, i]], p1 = vert_list[tri_table[cube_index, i+1]], p2 = vert_list[tri_table[cube_index, i+2]]}
             ) (0..3...12) -- there are max 5 triangles
 
-            in filter (\t -> area (t) > tol) triangles -- filter out zero size triangles.
+            -- in filter (\t -> area (t) > tol) triangles -- filter out zero size triangles.
+            in triangles
 
 let triangle_to_array (t: triangle) = 
     [

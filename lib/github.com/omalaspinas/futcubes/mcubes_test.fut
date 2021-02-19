@@ -16,7 +16,7 @@ let dummy_example : []mcubes.triangle =
     let p': [8]mcubes.point = [ooo, ioo, iio, oio, ooi, ioi, iii, oii]
 
     let grid: mcubes.grid_cell = {p = p', value = value'}
-    in mcubes.polygonise grid 0.5
+    in filter (\t -> mcubes.area t > mcubes.tol) (mcubes.polygonise grid 0.5)
 
 -- ==
 -- entry: main
@@ -25,3 +25,12 @@ let dummy_example : []mcubes.triangle =
 --          [1.000000f64, 1.000000f64, 0.500000f64, 0.000000f64, 0.000000f64, 0.500000f64, 0.000000f64, 1.000000f64, 0.500000f64]] }
 entry main : [][9]f64 =
     map (mcubes.triangle_to_array) (dummy_example)
+
+-- ==
+-- entry: main_field
+-- input { [0f64, 1f64, 0f64, 1f64, 0f64, 1f64, 0f64, 1f64] }
+-- output { [[1.000000f64, 0.000000f64, 0.500000f64, 0.000000f64, 0.000000f64, 0.500000f64, 1.000000f64, 1.000000f64, 0.500000f64], 
+--          [1.000000f64, 1.000000f64, 0.500000f64, 0.000000f64, 0.000000f64, 0.500000f64, 0.000000f64, 1.000000f64, 0.500000f64]] }
+entry main_field [n] (rho: [n]f64 ) : [][9]f64 =
+    let rho' = unflatten_3d 2 2 2 rho
+    in map (mcubes.triangle_to_array) (mcubes.polygonise_field rho' 0.5)
