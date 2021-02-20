@@ -365,7 +365,7 @@ let vertex_interp (isolevel: f64) (p1: point) (p2: point) (valp1: f64) (valp2: f
         in {x = px, y = py, z = pz}
 
 
-let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
+let polygonise (grid: grid_cell) (isolevel: f64) : [5]triangle =
     let cube_index = 0
     let cube_index = if grid.value[0] < isolevel then cube_index | 1 else cube_index
     let cube_index = if grid.value[1] < isolevel then cube_index | 2 else cube_index
@@ -378,7 +378,7 @@ let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
 
     --  Cube is entirely in/out of the surface
     in 
-        if (edge_table[cube_index] == 0) then []
+        if (edge_table[cube_index] == 0) then [empty_triangle, empty_triangle, empty_triangle, empty_triangle, empty_triangle] :> [5]triangle
         else
             let vert_list = 
                 map (\i ->
@@ -389,13 +389,13 @@ let polygonise (grid: grid_cell) (isolevel: f64) : []triangle =
                         zero
                 ) (iota 12)
 
-            let triangles : []triangle = map(\i ->
+            let triangles : [5]triangle = map(\i ->
                 if tri_table[cube_index, i] == -1 then empty_triangle
                 else {p0 = vert_list[tri_table[cube_index, i]], p1 = vert_list[tri_table[cube_index, i+1]], p2 = vert_list[tri_table[cube_index, i+2]]}
-            ) (0..3...12) -- there are max 5 triangles
+            ) ((0..3...12) :> [5]i64) -- there are max 5 triangles
 
             -- in filter (\t -> area (t) > tol) triangles -- filter out zero size triangles.
-            in triangles
+            in triangles :> [5]triangle
 
 let triangle_to_array (t: triangle) = 
     [
@@ -440,3 +440,5 @@ let polygonise_field [nx][ny][nz] (rho: [nx][ny][nz]f64) (isovalue: f64): []tria
     ) triangles -- only keep legal triangles
     
 } -- module mcubes
+
+
